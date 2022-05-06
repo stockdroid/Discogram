@@ -98,7 +98,7 @@ class cronologiaModal(nextcord.ui.Modal):
                 self.username.value, limit=10
             ):
                 messages.append(
-                    eval(f"f'{self.stringsDict['MessageTemplate']}'")
+                    eval(f"""f'''{self.stringsDict['MessageTemplate']}'''""")
                 )
                 i += 1
             messages.reverse()
