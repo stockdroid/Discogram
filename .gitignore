@@ -1,0 +1,4 @@
+*.session
+*.db
+*.session-journal
+downloads/
