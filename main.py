@@ -101,15 +101,19 @@ class cronologiaModal(nextcord.ui.Modal):
         try:
             messages = []
             i = 0
+            messlist = 0
             if int(self.messaggi.value) == -1:
-                messlist = tgInstance.get_chat_history(
-                    self.username.value
-                )
+                lim = 999999999
             else:
-                messlist = tgInstance.get_chat_history(
-                    self.username.value, limit=int(self.messaggi.value)
-                )
-            async for message in messlist:
+                lim = int(self.messaggi.value)
+            async for mess in tgInstance.get_chat_history(
+                self.username.value, limit=lim
+            ):
+                messlist+=1
+            
+            async for message in tgInstance.get_chat_history(
+                self.username.value, limit=int(self.messaggi.value)
+            ):
                 messages.append(
                     eval(f"""f'''{self.stringsDict['MessageTemplate']}'''""")
                 )
