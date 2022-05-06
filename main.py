@@ -27,7 +27,6 @@ tgInstance = pyrogram.Client(
 )
 discordClient = commands.Bot(command_prefix="$")
 
-
 class sendMessage(nextcord.ui.Modal):
     def __init__(self):
         self.stringsDict = messageFile["modals"]["sendMessage"]
@@ -35,7 +34,7 @@ class sendMessage(nextcord.ui.Modal):
         self.username = nextcord.ui.TextInput(
             label=self.stringsDict["UsernameLabel"],
             placeholder=self.stringsDict["UsernamePlaceholder"],
-            required=False,
+            required=True,
             max_length=32,
         )
         self.add_item(self.username)
@@ -46,6 +45,7 @@ class sendMessage(nextcord.ui.Modal):
             style=nextcord.TextInputStyle.paragraph,
             min_length=2,
             max_length=500,
+            required=True
         )
         self.add_item(self.text)
 
@@ -69,7 +69,7 @@ class sendMessage(nextcord.ui.Modal):
                 interaction.user.name,
                 self.username.value,
                 self.text.value,
-                True,
+                True
             )
             await interaction.send(self.stringsDict["MessageSentResponse"], ephemeral=True)
         except Exception as e:
@@ -98,14 +98,14 @@ class cronologiaModal(nextcord.ui.Modal):
                 self.username.value, limit=10
             ):
                 messages.append(
-                    f"{10-i}. {message.from_user.first_name} ha detto: `{message.text}`\n"
+                    eval(f"f'{self.stringsDict['MessageTemplate']}'")
                 )
                 i += 1
             messages.reverse()
             await interaction.send(self.stringsDict["MessagesPrefix"] + "".join(messages))
         except Exception as e:
             await interaction.send(
-                "Si è verificato un errore, eccolo qua: " + str(e), ephemeral=True
+                messageFile["errorMessage"] + str(e), ephemeral=True
             )
 
 
@@ -176,8 +176,7 @@ async def on_tg_message(client, message, is_dm):
     )
     channel = discordClient.get_channel(configFile["discord"]["channel_id"])
     if (
-        message.from_user.username == "stockdroidgroupassistance"
-        or message.from_user.id == 777000
+        message.from_user.id in messageFile["ignoreTGAuthor"]
     ):
         pass
     elif res is None or res == "True":
@@ -288,24 +287,10 @@ async def on_tg_message_media(client, message, is_dm):
 async def close_ticket(message, motivazione):
     guild = discordClient.get_channel(configFile["discord"]["channel_id"])
     db_conn, cur = conndb()
-
-    cur.execute(
-        f"""
-        SELECT message_id
-        FROM tickets
-        WHERE id = '{message.channel.name}'
-        """
-    )
-    mess_id = cur.fetchone()
-    thread = guild.get_thread(mess_id[0])
-    cur.execute(
-        f"""
-        SELECT user_id
-        FROM tickets
-        WHERE id = '{message.channel.name}'
-        """
-    )
-    user_id = cur.fetchone()
+    
+    mess_id = fetchone(cur, "message_id", "id", message.channel.name, "")
+    thread = guild.get_thread(mess_id)
+    user_id = fetchone(cur, "user_id", "id", message.channel.name, "")
     cur.execute(
         f"""
         UPDATE tickets
@@ -319,7 +304,7 @@ async def close_ticket(message, motivazione):
         f"\n\nMotivazione: {' '.join(motivazione) if motivazione != '' else ''}"
     )
     await tgInstance.send_message(
-        user_id[0], messageFile["closedTicketTG"] + motivoSuffix
+        user_id, messageFile["closedTicketTG"] + motivoSuffix
     )
     await thread.edit(
         name=thread.name + messageFile["closedThread"], archived=True, locked=True
@@ -348,30 +333,24 @@ async def on_message(message):
         and not message.content.startswith(configFile["discord"]["ignoreMessagePrefix"])
         and message.author.id != discordClient.application_id
     ):
-        db_conn = sqlite3.connect(r"./messages.db")
-        cur = db_conn.cursor()
-        cur.execute(
-            f"""
-                    SELECT user_id
-                    FROM tickets
-                    WHERE id = '{message.channel.name}'
-                    """
-        )
-        ticket = cur.fetchone()
+        db_conn, cur = conndb()
+        ticket = fetchone(cur, "user_id", "id", message.channel.name, "")
+
         for attachment in message.attachments:
             open(os.path.join("./downloads", attachment.filename), "wb").write(
                 requests.get(attachment.url).content
             )
             if message.attachments[-1].url == attachment.url:
                 await tgInstance.send_document(
-                    chat_id=ticket[0],
+                    chat_id=ticket,
                     document=os.path.join("./downloads", attachment.filename),
                     caption=message.content,
                 )
             else:
                 await tgInstance.send_document(
-                    chat_id=ticket[0],
+                    chat_id=ticket,
                     document=os.path.join("./downloads", attachment.filename),
+                    caption=message.content
                 )
             os.remove(os.path.join("./downloads", attachment.filename))
         cur.close()
@@ -381,18 +360,10 @@ async def on_message(message):
         and not message.content.startswith(configFile["discord"]["ignoreMessagePrefix"])
         and message.author.id != discordClient.application_id
     ):
-        db_conn = sqlite3.connect(r"./messages.db")
-        cur = db_conn.cursor()
-        cur.execute(
-            f"""
-            SELECT user_id
-            FROM tickets
-            WHERE id = '{message.channel.name}'
-            """
-        )
-        ticket = cur.fetchone()
+        db_conn, cur = conndb()
+        ticket = fetchone(cur, "user_id", "id", message.channel.name, "")
         try:
-            await tgInstance.send_message(chat_id=ticket[0], text=message.content)
+            await tgInstance.send_message(chat_id=ticket, text=message.content)
         except:
             pass
         cur.close()
