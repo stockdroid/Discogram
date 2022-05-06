@@ -20,7 +20,9 @@
       "UsernameLabel": "Username",
       "UsernamePlaceholder": "@ordissimISSIMO",
       "MessageTemplate": "{len(list(messlist))-i}. {message.from_user.first_name} ha detto: `{message.text}`\n",
-      "MessagesPrefix": "Messaggi:\n\n"
+      "MessagesPrefix": "Messaggi:\n\n",
+      "MessagesLabel": "Numero messaggi:",
+      "MessagesPlaceholder": "-1 se tutti i messaggi sennò il numero di messaggi"
     }
   }
 }

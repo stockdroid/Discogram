@@ -89,14 +89,26 @@ class cronologiaModal(nextcord.ui.Modal):
             max_length=32,
         )
         self.add_item(self.username)
+        self.messaggi = nextcord.ui.TextInput(
+            label=self.stringsDict["MessagesLabel"],
+            placeholder=self.stringsDict["MessagesPlaceholder"],
+            required=True,
+            max_length=32,
+        )
+        self.add_item(self.messaggi)
 
     async def callback(self, interaction: nextcord.Interaction) -> None:
         try:
             messages = []
             i = 0
-            messlist = tgInstance.get_chat_history(
-                self.username.value, limit=10
-            )
+            if int(self.messaggi.value) == -1:
+                messlist = tgInstance.get_chat_history(
+                    self.username.value
+                )
+            else:
+                messlist = tgInstance.get_chat_history(
+                    self.username.value, limit=int(self.messaggi.value)
+                )
             async for message in messlist:
                 messages.append(
                     eval(f"""f'''{self.stringsDict['MessageTemplate']}'''""")
