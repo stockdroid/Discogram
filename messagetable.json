@@ -19,7 +19,7 @@
       "modalTitle": "Cronologia chat",
       "UsernameLabel": "Username",
       "UsernamePlaceholder": "@ordissimISSIMO",
-      "MessageTemplate": "{10-i}. {message.from_user.first_name} ha detto: `{message.text}`\n",
+      "MessageTemplate": "{len(list(messlist))-i}. {message.from_user.first_name} ha detto: `{message.text}`\n",
       "MessagesPrefix": "Messaggi:\n\n"
     }
   }
