@@ -10,6 +10,7 @@ import pyrogram
 import requests
 from nextcord.ext import commands
 from nextcord.ui import *
+import tempfile
 
 configFile = json.load(open("config.json"))
 messageFile = json.load(open("messagetable.json"))
@@ -258,7 +259,8 @@ async def on_tg_message_media(client, message, is_dm):
     channel = discordClient.get_channel(configFile["discord"]["channel_id"])
     if res is None or res == "True":
         first_name, last_name, full_name = await welcomeAndInitNames(message)
-        path = await tgInstance.download_media(message=message, in_memory=True)
+        temp_local_dir = tempfile.mkdtemp()
+        path = await tgInstance.download_media(message=message, file_name=temp_local_dir)
 
         message_res = await channel.send(
             eval(f"f'{messageFile['startingMessageTemplateMedia']}'"),
@@ -293,9 +295,10 @@ async def on_tg_message_media(client, message, is_dm):
             str(message.from_user.id),
             "ORDER BY date DESC",
         )
-        path = await tgInstance.download_media(message=message, in_memory=True)
+        temp_local_dir = tempfile.mkdtemp()
+        path = await tgInstance.download_media(message=message, file_name=temp_local_dir)
         await channel.get_thread(mess_id).send(
-            message.caption, file=nextcord.File(path)
+            message.caption, file=nextcord.File(path), 
         )
     cur.close()
     db_conn.close()
@@ -428,6 +431,27 @@ async def cronologia(interaction: nextcord.Integration):
     except Exception as e:
         pass
 
+@discordClient.slash_command(name="block", description="Blocca l'utente")    
+async def block(interaction):
+    db_conn, cur = conndb()
+    channel = interaction.channel
+    if type(channel) == nextcord.Thread:
+        user_id = fetchone(cur, "user_id", "message_id", channel.id, "")
+        await tgInstance.block_user(user_id)
+        await interaction.response.send_message("Utente bloccato!")
+    else:
+        await interaction.response.send_message("Non sei in un thread!", epherimental=True)
+
+@discordClient.slash_command(name="unblock", description="Sblocca l'utente")    
+async def unblock(interaction):
+    db_conn, cur = conndb()
+    channel = interaction.channel
+    if type(channel) == nextcord.Thread:
+        user_id = fetchone(cur, "user_id", "message_id", channel.id, "")
+        await tgInstance.unblock_user(user_id)
+        await interaction.response.send_message("Utente sbloccato!")
+    else:
+        await interaction.response.send_message("Non sei in un thread!", epherimental=True)
 
 if __name__ == "__main__":
     create_connection(r"./messages.db")
