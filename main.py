@@ -193,7 +193,7 @@ async def on_tg_message(client, message, is_dm):
     )
     channel = discordClient.get_channel(configFile["discord"]["channel_id"])
     if (
-        message.from_user.id in messageFile["ignoreTGAuthor"]
+        message.from_user.id in configFile["discord"]["ignoreTGAuthor"]
     ):
         pass
     elif res is None or res == "True":
