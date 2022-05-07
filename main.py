@@ -259,8 +259,8 @@ async def on_tg_message_media(client, message, is_dm):
     channel = discordClient.get_channel(configFile["discord"]["channel_id"])
     if res is None or res == "True":
         first_name, last_name, full_name = await welcomeAndInitNames(message)
-        temp_local_dir = tempfile.mkdtemp()
-        path = await tgInstance.download_media(message=message, file_name=temp_local_dir)
+        path = await tgInstance.download_media(message=message)
+        os.remove(path)
 
         message_res = await channel.send(
             eval(f"f'{messageFile['startingMessageTemplateMedia']}'"),
@@ -295,11 +295,12 @@ async def on_tg_message_media(client, message, is_dm):
             str(message.from_user.id),
             "ORDER BY date DESC",
         )
-        temp_local_dir = tempfile.mkdtemp()
-        path = await tgInstance.download_media(message=message, file_name=temp_local_dir)
-        await channel.get_thread(mess_id).send(
-            message.caption, file=nextcord.File(path), 
+        path = await tgInstance.download_media(message=message
         )
+        await channel.get_thread(mess_id).send(
+            message.caption, file=nextcord.File(path)
+        )
+        os.remove(path)
     cur.close()
     db_conn.close()
 
