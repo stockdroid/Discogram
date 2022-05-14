@@ -2,8 +2,7 @@ import datetime
 import json
 import logging
 import os
-import sqlite3
-from sqlite3 import Error
+import mysql.connector
 
 import nextcord
 import pyrogram
@@ -128,14 +127,16 @@ class cronologiaModal(nextcord.ui.Modal):
 
 
 def conndb():
-    db_conn = sqlite3.connect(r"./messages.db")
-    cur = db_conn.cursor()
+    db_conn = mysql.connector.connect(user='root', password='quEG7YTYNT3Vxx!',
+                              host='127.0.0.1',
+                              database='discogramTickets')
+    cur = db_conn.cursor(buffered=True)
     return db_conn, cur
 
 
 def fetchone(cur, what, where, whereval, orderstr):
     cur.execute(
-        f"""SELECT {what} FROM tickets WHERE {where} = '{whereval}' {orderstr}"""
+        f"""SELECT {what} FROM tickets WHERE {where} = '{whereval}' {orderstr} limit 1"""
     )
     res = cur.fetchone()
     try:
@@ -146,7 +147,6 @@ def fetchone(cur, what, where, whereval, orderstr):
 
 def insert(cur, values):
     cur.execute(f"""INSERT INTO tickets VALUES {values}""")
-
 
 async def on_forced_ticket(id, name, username, content, is_dm):
     db_conn, cur = conndb()
@@ -193,6 +193,7 @@ async def on_tg_message(client, message, is_dm):
         cur, "is_closed", "user_id", str(message.from_user.id), "ORDER BY date DESC"
     )
     channel = discordClient.get_channel(configFile["discord"]["channel_id"])
+    print(res)
     if (
         message.from_user.id in configFile["discord"]["ignoreTGAuthor"]
     ):
@@ -223,6 +224,8 @@ async def on_tg_message(client, message, is_dm):
         )
 
         db_conn.commit()
+        cur.close()
+        db_conn.close()
     else:
         mess_id = fetchone(
             cur,
@@ -235,8 +238,8 @@ async def on_tg_message(client, message, is_dm):
             await channel.get_thread(mess_id).send(message.text)
         except nextcord.errors.HTTPException:
             pass
-    cur.close()
-    db_conn.close()
+        cur.close()
+        db_conn.close()
 
 
 async def welcomeAndInitNames(message):
@@ -383,6 +386,7 @@ async def on_message(message):
     ):
         db_conn, cur = conndb()
         ticket = fetchone(cur, "user_id", "id", message.channel.name, "")
+        #print(cur.fetchone(), cur.fetchone())
         try:
             await tgInstance.send_message(chat_id=ticket, text=message.content)
         except:
@@ -396,21 +400,6 @@ async def on_private_message(client, message):
     if message.media:
         await on_tg_message_media(client, message, True)
     await on_tg_message(client, message, True)
-
-
-def create_connection(db_file):
-    db_conn = sqlite3.connect(db_file)
-    cur = db_conn.cursor()
-    pass
-    try:
-        cur.execute(
-            "CREATE TABLE tickets (id integer, message_id integer, date integer, user_id integer, text_ticket text, is_closed text, is_dm text)"
-        )
-        db_conn.commit()
-    except Error:
-        pass
-    cur.close()
-    db_conn.close()
 
 
 @discordClient.slash_command(name="send", description="Manda un messaggio")
@@ -455,7 +444,6 @@ async def unblock(interaction):
         await interaction.response.send_message("Non sei in un thread!", epherimental=True)
 
 if __name__ == "__main__":
-    create_connection(r"./messages.db")
     try:
         os.mkdir("./downloads")
     except FileExistsError:
