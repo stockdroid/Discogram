@@ -2,3 +2,4 @@
 *.db
 *.session-journal
 downloads/
+config.json

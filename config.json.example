@@ -1,0 +1,17 @@
+{
+    "logging": {
+        "loggingFormat": "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        "loggingLevel": "INFO"
+    },
+    "telegram": {
+        "api_id": api_id,
+        "api_hash": "api_hash"
+    },
+    "discord": {
+        "token": "discordBotToken",
+        "channel_id": ticketChannelId,
+        "ignoreMessagePrefix": "###",
+        "IDPrefix": "TCK-",
+        "ignoreTGAuthor": [777000, idbot]
+    }
+}
