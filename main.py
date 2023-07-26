@@ -127,7 +127,7 @@ class cronologiaModal(nextcord.ui.Modal):
 
 
 def conndb():
-    db_conn = mysql.connector.connect(user='root', password='quEG7YTYNT3Vxx!',
+    db_conn = mysql.connector.connect(user='root', password='REDACTED',
                               host='127.0.0.1',
                               database='discogramTickets')
     cur = db_conn.cursor(buffered=True)
